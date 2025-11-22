@@ -1,0 +1,7 @@
+{
+  "name": "Nexus Dashboard",
+  "description": "A premium, aesthetic personal start page with customizable shortcuts and a focus on glassmorphism design.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
