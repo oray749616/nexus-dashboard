@@ -8,7 +8,7 @@ type AnimationPhase =
 
 export const AnimatedLogo: React.FC = () => {
   // Define text variables (leave empty to skip)
-  const FIRST_TEXT = 'GUGUGAGA';
+  const FIRST_TEXT = 'GUGUGAGA !!!';
   const SECOND_TEXT = 'MYGO !!!';
   const THIRD_TEXT = '';
   const FOURTH_TEXT = '';
