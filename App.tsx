@@ -10,6 +10,51 @@ import { AnimatedLogo } from './components/AnimatedLogo';
 import { Dock } from './components/Dock';
 import { Shortcut, ContextMenuState, ModalState } from './types';
 
+/**
+ * Safely save to localStorage with quota management
+ * Automatically removes oldest custom icons when storage is full
+ */
+const saveToLocalStorage = (key: string, data: Shortcut[]): boolean => {
+  try {
+    localStorage.setItem(key, JSON.stringify(data));
+    return true;
+  } catch (error) {
+    // Detect quota exceeded error
+    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
+      console.warn('localStorage quota insufficient, attempting to auto-clean custom icons...');
+
+      // Find all shortcuts with custom icons, sorted by time (assuming smaller ID = older)
+      const customIconShortcuts = data.filter(s => s.customIcon);
+
+      if (customIconShortcuts.length === 0) {
+        // No custom icons to clean, cannot resolve quota issue
+        alert('Storage quota exceeded! Please delete some shortcuts or clear browser cache.');
+        return false;
+      }
+
+      // Remove the oldest custom icon (keep the shortcut itself)
+      const oldestCustomIcon = customIconShortcuts[0];
+      const cleanedData = data.map(s =>
+        s.id === oldestCustomIcon.id ? { ...s, customIcon: undefined } : s
+      );
+
+      // Display friendly notification
+      const message = `Storage quota exceeded. Automatically removed custom icon for "${oldestCustomIcon.title}".\nThe default website icon will be used instead.`;
+      console.warn(message);
+
+      // Delay alert to avoid blocking UI
+      setTimeout(() => alert(message), 100);
+
+      // Recursive retry
+      return saveToLocalStorage(key, cleanedData);
+    }
+
+    // Other errors
+    console.error('localStorage save failed:', error);
+    return false;
+  }
+};
+
 // Default shortcuts for first-time users
 const DEFAULT_SHORTCUTS: Shortcut[] = [
   { id: '1', title: 'ChatGPT', url: 'https://chat.openai.com' },
@@ -117,7 +162,21 @@ const App: React.FC = () => {
 
   // --- Persistence & Theme Effect ---
   useEffect(() => {
-    localStorage.setItem('nexus_shortcuts', JSON.stringify(shortcuts));
+    // Use safe save function with automatic quota handling
+    const success = saveToLocalStorage('nexus_shortcuts', shortcuts);
+
+    // If save fails after auto-cleanup, update state with cleaned data
+    if (!success) {
+      // Re-read localStorage to get cleaned data
+      const saved = localStorage.getItem('nexus_shortcuts');
+      if (saved) {
+        const cleanedShortcuts = JSON.parse(saved);
+        // Only update state if data actually changed to avoid infinite loop
+        if (JSON.stringify(cleanedShortcuts) !== JSON.stringify(shortcuts)) {
+          setShortcuts(cleanedShortcuts);
+        }
+      }
+    }
   }, [shortcuts]);
 
   useEffect(() => {
@@ -165,17 +224,18 @@ const App: React.FC = () => {
     }
   };
 
-  const handleSaveShortcut = (title: string, url: string) => {
+  const handleSaveShortcut = (title: string, url: string, customIcon?: string) => {
     if (modal.type === 'add') {
       const newShortcut: Shortcut = {
         id: uuidv4(),
         title,
         url,
+        ...(customIcon && { customIcon }), // 只在有 customIcon 时添加
       };
       setShortcuts(prev => [...prev, newShortcut]);
     } else if (modal.type === 'edit' && modal.shortcutId) {
-      setShortcuts(prev => prev.map(s => 
-        s.id === modal.shortcutId ? { ...s, title, url } : s
+      setShortcuts(prev => prev.map(s =>
+        s.id === modal.shortcutId ? { ...s, title, url, customIcon } : s
       ));
     }
     setModal({ isOpen: false, type: null });

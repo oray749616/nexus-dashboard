@@ -2,6 +2,7 @@ export interface Shortcut {
   id: string;
   title: string;
   url: string;
+  customIcon?: string; // Base64 编码的自定义图标
 }
 
 export interface ContextMenuState {
