@@ -1,13 +1,14 @@
 'use client'
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Cloud, Calendar, ListTodo, StickyNote } from 'lucide-react';
+import { Cloud, Calendar, ListTodo, StickyNote, Coins } from 'lucide-react';
 import { WeatherWidget, WeatherData } from './WeatherWidget';
 import { CalendarWidget } from './CalendarWidget';
 import { TodoWidget } from './TodoWidget';
 import { QuickNotesWidget } from './QuickNotesWidget';
+import CurrencyWidget from './CurrencyWidget';
 
-type ActiveWidget = 'weather' | 'calendar' | 'todo' | 'notes' | null;
+type ActiveWidget = 'weather' | 'calendar' | 'todo' | 'notes' | 'currency' | null;
 
 export const Dock: React.FC = () => {
   const [activeWidget, setActiveWidget] = useState<ActiveWidget>(null);
@@ -98,6 +99,7 @@ export const Dock: React.FC = () => {
       case 'calendar': return <CalendarWidget />;
       case 'todo': return <TodoWidget />;
       case 'notes': return <QuickNotesWidget />;
+      case 'currency': return <CurrencyWidget />;
       default: return null;
     }
   };
@@ -108,6 +110,7 @@ export const Dock: React.FC = () => {
     { id: 'calendar', icon: <Calendar size={20} />, label: 'Calendar' },
     { id: 'todo', icon: <ListTodo size={20} />, label: 'Todo' },
     { id: 'notes', icon: <StickyNote size={20} />, label: 'Quick Notes' },
+    { id: 'currency', icon: <Coins size={20} />, label: 'Currency' },
   ];
 
   return (
