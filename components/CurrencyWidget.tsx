@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ArrowLeftRight, RefreshCw, AlertCircle } from 'lucide-react'
+import { ArrowLeftRight, RefreshCw, AlertCircle, Coins } from 'lucide-react'
 
 // Type definitions
 interface CachedRates {
@@ -195,11 +195,12 @@ export default function CurrencyWidget() {
 
   return (
     <div
-      className="w-80 flex flex-col p-4"
+      className="w-80 flex flex-col p-1"
       onClick={(e) => e.stopPropagation()}
     >
       {/* 标题 */}
-      <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">
+      <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4 flex items-center gap-2">
+        <Coins size={20} className="text-indigo-500" />
         Currency Converter
       </h3>
 

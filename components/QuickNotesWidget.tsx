@@ -67,6 +67,7 @@ export const QuickNotesWidget: React.FC = () => {
     <div className="w-80 h-96 flex flex-col" onClick={(e) => e.stopPropagation()}>
       <div className="flex items-center justify-between mb-4 px-1">
         <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200 flex items-center gap-2">
+          <StickyNote size={20} className="text-indigo-500" />
           Quick Notes
           <span className="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[10px] font-bold text-slate-500">
             {notes.length}/10

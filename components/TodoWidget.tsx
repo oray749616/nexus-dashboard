@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Trash2, Plus, CheckCircle2, Circle } from 'lucide-react';
+import { Trash2, Plus, CheckCircle2, Circle, ListTodo } from 'lucide-react';
 
 interface Todo {
   id: string;
@@ -81,7 +81,10 @@ export const TodoWidget: React.FC = () => {
 
   return (
     <div className="w-80 h-96 flex flex-col" onClick={(e) => e.stopPropagation()}>
-      <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200 mb-4 px-1">Tasks</h3>
+      <h3 className="text-lg font-bold text-slate-700 dark:text-slate-200 mb-4 px-1 flex items-center gap-2">
+        <ListTodo size={20} className="text-indigo-500" />
+        Tasks
+      </h3>
 
       <div className="flex-1 overflow-y-auto pr-2 space-y-2 mb-4 scrollbar-thin">
         {todos.length === 0 ? (
