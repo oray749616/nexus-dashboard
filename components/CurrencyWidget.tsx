@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { ArrowLeftRight, RefreshCw, AlertCircle } from 'lucide-react'
 
-// 类型定义
+// Type definitions
 interface CachedRates {
   rates: { [key: string]: number }
   base: string
@@ -16,7 +16,7 @@ interface CurrencyPreferences {
   toCurrency: string
 }
 
-// 常用货币列表
+// Common currency list
 const COMMON_CURRENCIES = [
   { code: 'CNY', name: '人民币', symbol: '¥' },
   { code: 'USD', name: '美元', symbol: '$' },
@@ -30,7 +30,7 @@ const COMMON_CURRENCIES = [
   { code: 'SGD', name: '新加坡元', symbol: 'S$' },
 ]
 
-// 缓存时长：24小时
+// Cache duration: 24 hours
 const CACHE_DURATION = 24 * 60 * 60 * 1000
 
 export default function CurrencyWidget() {
@@ -43,11 +43,11 @@ export default function CurrencyWidget() {
   const [error, setError] = useState<string | null>(null)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
-  // 客户端初始化
+  // Client-side initialization
   useEffect(() => {
     setIsClient(true)
 
-    // 加载用户偏好
+    // Load user preferences
     const savedPreferences = localStorage.getItem('nexus_currency_preferences')
     if (savedPreferences) {
       try {
@@ -59,7 +59,7 @@ export default function CurrencyWidget() {
       }
     }
 
-    // 加载缓存的汇率
+    // Load cached exchange rates
     const savedRates = localStorage.getItem('nexus_currency_rates')
     if (savedRates) {
       try {
@@ -67,10 +67,10 @@ export default function CurrencyWidget() {
         setRates(cachedRates)
         setLastUpdated(new Date(cachedRates.timestamp))
 
-        // 检查缓存是否过期
+        // Check if cache is expired
         const isExpired = Date.now() - cachedRates.timestamp > CACHE_DURATION
         if (isExpired) {
-          fetchRates() // 后台刷新
+          fetchRates() // Background refresh
         }
       } catch (e) {
         console.error('Failed to load cached rates:', e)
@@ -81,7 +81,7 @@ export default function CurrencyWidget() {
     }
   }, [])
 
-  // 保存用户偏好（只保存货币类型选择）
+  // Save user preferences (only save currency type selection)
   useEffect(() => {
     if (isClient) {
       const preferences: CurrencyPreferences = {
@@ -92,7 +92,7 @@ export default function CurrencyWidget() {
     }
   }, [fromCurrency, toCurrency, isClient])
 
-  // 获取汇率数据
+  // Fetch exchange rate data
   const fetchRates = async () => {
     const apiKey = process.env.NEXT_PUBLIC_FXRATES_API_KEY
 
@@ -134,7 +134,7 @@ export default function CurrencyWidget() {
       setError(errorMessage)
       console.error('Failed to fetch rates:', e)
 
-      // 如果有缓存数据，继续使用
+      // If cached data is available, continue using it
       if (rates) {
         setError(`${errorMessage} (using cached data)`)
       }
@@ -143,25 +143,25 @@ export default function CurrencyWidget() {
     }
   }
 
-  // 计算转换结果
+  // Calculate conversion result
   const calculateConversion = (): number => {
     if (!rates || !rates.rates) return 0
 
     const fromRate = rates.rates[fromCurrency] || 1
     const toRate = rates.rates[toCurrency] || 1
 
-    // 从 fromCurrency 转换到 USD，再从 USD 转换到 toCurrency
+    // Convert from fromCurrency to USD, then from USD to toCurrency
     const result = (amount / fromRate) * toRate
-    return Math.round(result * 100) / 100 // 保留两位小数
+    return Math.round(result * 100) / 100 // Keep two decimal places
   }
 
-  // 货币互换
+  // Swap currencies
   const swapCurrencies = () => {
     setFromCurrency(toCurrency)
     setToCurrency(fromCurrency)
   }
 
-  // 格式化更新时间
+  // Format last updated time
   const formatLastUpdated = (): string => {
     if (!lastUpdated) return 'Not updated'
 
@@ -178,7 +178,7 @@ export default function CurrencyWidget() {
     return `Updated ${days} days ago`
   }
 
-  // 获取当前汇率
+  // Get current exchange rate
   const getCurrentRate = (): string => {
     if (!rates || !rates.rates) return '-'
 
