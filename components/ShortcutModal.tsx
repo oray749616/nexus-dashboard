@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { X, Upload } from 'lucide-react';
 import { Shortcut } from '../types';

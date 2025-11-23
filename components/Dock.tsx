@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Cloud, Calendar, ListTodo, StickyNote } from 'lucide-react';
 import { WeatherWidget, WeatherData } from './WeatherWidget';

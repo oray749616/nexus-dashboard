@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useRef, useMemo, useReducer, useState } from 'react';
 import { Shortcut } from '../types';
 
@@ -76,8 +78,6 @@ export const ShortcutGrid: React.FC<ShortcutGridProps> = ({ shortcuts, onContext
           <a
             key={shortcut.id}
             href={shortcut.url}
-            target="_blank"
-            rel="noopener noreferrer"
             onContextMenu={(e) => {
               e.stopPropagation(); // Stop bubbling to background
               onContextMenu(e, shortcut.id);

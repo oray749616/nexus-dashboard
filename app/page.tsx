@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { v4 as uuidv4 } from 'uuid';
-import { Sun, Moon } from 'lucide-react';
-import { SearchBar } from './components/SearchBar';
-import { ShortcutGrid } from './components/ShortcutGrid';
-import { ContextMenu } from './components/ContextMenu';
-import { ShortcutModal } from './components/ShortcutModal';
-import { Clock } from './components/Clock';
-import { AnimatedLogo } from './components/AnimatedLogo';
-import { Dock } from './components/Dock';
-import { Shortcut, ContextMenuState, ModalState } from './types';
+'use client'
+
+import React, { useState, useEffect } from 'react'
+import { v4 as uuidv4 } from 'uuid'
+import { Sun, Moon } from 'lucide-react'
+import { SearchBar } from '@/components/SearchBar'
+import { ShortcutGrid } from '@/components/ShortcutGrid'
+import { ContextMenu } from '@/components/ContextMenu'
+import { ShortcutModal } from '@/components/ShortcutModal'
+import { Clock } from '@/components/Clock'
+import { AnimatedLogo } from '@/components/AnimatedLogo'
+import { Dock } from '@/components/Dock'
+import { Shortcut, ContextMenuState, ModalState } from '@/types'
 
 /**
  * Safely save to localStorage with quota management
@@ -16,44 +18,44 @@ import { Shortcut, ContextMenuState, ModalState } from './types';
  */
 const saveToLocalStorage = (key: string, data: Shortcut[]): boolean => {
   try {
-    localStorage.setItem(key, JSON.stringify(data));
-    return true;
+    localStorage.setItem(key, JSON.stringify(data))
+    return true
   } catch (error) {
     // Detect quota exceeded error
     if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-      console.warn('localStorage quota insufficient, attempting to auto-clean custom icons...');
+      console.warn('localStorage quota insufficient, attempting to auto-clean custom icons...')
 
       // Find all shortcuts with custom icons, sorted by time (assuming smaller ID = older)
-      const customIconShortcuts = data.filter(s => s.customIcon);
+      const customIconShortcuts = data.filter(s => s.customIcon)
 
       if (customIconShortcuts.length === 0) {
         // No custom icons to clean, cannot resolve quota issue
-        alert('Storage quota exceeded! Please delete some shortcuts or clear browser cache.');
-        return false;
+        alert('Storage quota exceeded! Please delete some shortcuts or clear browser cache.')
+        return false
       }
 
       // Remove the oldest custom icon (keep the shortcut itself)
-      const oldestCustomIcon = customIconShortcuts[0];
+      const oldestCustomIcon = customIconShortcuts[0]
       const cleanedData = data.map(s =>
         s.id === oldestCustomIcon.id ? { ...s, customIcon: undefined } : s
-      );
+      )
 
       // Display friendly notification
-      const message = `Storage quota exceeded. Automatically removed custom icon for "${oldestCustomIcon.title}".\nThe default website icon will be used instead.`;
-      console.warn(message);
+      const message = `Storage quota exceeded. Automatically removed custom icon for "${oldestCustomIcon.title}".\nThe default website icon will be used instead.`
+      console.warn(message)
 
       // Delay alert to avoid blocking UI
-      setTimeout(() => alert(message), 100);
+      setTimeout(() => alert(message), 100)
 
       // Recursive retry
-      return saveToLocalStorage(key, cleanedData);
+      return saveToLocalStorage(key, cleanedData)
     }
 
     // Other errors
-    console.error('localStorage save failed:', error);
-    return false;
+    console.error('localStorage save failed:', error)
+    return false
   }
-};
+}
 
 // Default shortcuts for first-time users
 const DEFAULT_SHORTCUTS: Shortcut[] = [
@@ -62,17 +64,49 @@ const DEFAULT_SHORTCUTS: Shortcut[] = [
   { id: '3', title: 'GitHub', url: 'https://github.com' },
   { id: '4', title: 'X', url: 'https://x.com' },
   { id: '5', title: 'BiliBili', url: 'https://bilibili.com' },
-];
+]
 
-const App: React.FC = () => {
-  // --- Random Background Orb Themes ---
-  const backgroundOrbs = React.useMemo(() => {
+export default function Home() {
+  // --- State Management ---
+  const [shortcuts, setShortcuts] = useState<Shortcut[]>(DEFAULT_SHORTCUTS)
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [isClient, setIsClient] = useState(false)
+
+  // --- Random Background Orb Themes (Client-side only) ---
+  const [backgroundOrbs, setBackgroundOrbs] = useState<Array<{
+    top: string
+    bottom: string
+    left: string
+    right: string
+    size: string
+    color: string
+    blur: string
+    animation: string
+  }>>([]) // Initialize as empty array for SSR
+
+  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
+    visible: false,
+    x: 0,
+    y: 0,
+    shortcutId: null,
+  })
+
+  const [modal, setModal] = useState<ModalState>({
+    isOpen: false,
+    type: null,
+  })
+
+  // --- Initialize from localStorage (client-side only) ---
+  useEffect(() => {
+    setIsClient(true)
+
+    // Generate random background orbs (client-side only to avoid hydration mismatch)
     const randomPosition = () => ({
       top: Math.random() > 0.5 ? `${Math.random() * 30 - 10}%` : 'auto',
       bottom: Math.random() > 0.5 ? `${Math.random() * 30 - 10}%` : 'auto',
       left: Math.random() > 0.5 ? `${Math.random() * 40 - 10}%` : 'auto',
       right: Math.random() > 0.5 ? `${Math.random() * 40 - 10}%` : 'auto',
-    });
+    })
 
     // Define multiple color theme groups
     const orbThemes = [
@@ -115,114 +149,107 @@ const App: React.FC = () => {
         { color: 'bg-purple-100/50 dark:bg-purple-950/30', blur: 'blur-[110px]' },
         { color: 'bg-blue-200/40 dark:bg-blue-950/20', blur: 'blur-[115px]' },
       ],
-    ];
+    ]
 
     // Randomly select a theme
-    const selectedTheme = orbThemes[Math.floor(Math.random() * orbThemes.length)];
+    const selectedTheme = orbThemes[Math.floor(Math.random() * orbThemes.length)]
 
     // Animation variants
-    const animations = ['animate-float-1', 'animate-float-2', 'animate-float-3'];
+    const animations = ['animate-float-1', 'animate-float-2', 'animate-float-3']
 
     // Generate orbs with random positions and sizes
-    return selectedTheme.map((orb, index) => ({
+    const generatedOrbs = selectedTheme.map((orb, index) => ({
       ...randomPosition(),
       size: `${35 + Math.random() * 30}%`, // 35-65%
       color: orb.color,
       blur: orb.blur,
       animation: animations[index % animations.length],
-    }));
-  }, []); // Empty dependency array ensures this runs only once on mount
+    }))
 
-  // --- State Management ---
-  const [shortcuts, setShortcuts] = useState<Shortcut[]>(() => {
-    const saved = localStorage.getItem('nexus_shortcuts');
-    return saved ? JSON.parse(saved) : DEFAULT_SHORTCUTS;
-  });
+    setBackgroundOrbs(generatedOrbs)
 
-  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    const savedTheme = localStorage.getItem('nexus_theme');
-    if (savedTheme) return savedTheme as 'light' | 'dark';
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
+    // Load shortcuts from localStorage
+    const savedShortcuts = localStorage.getItem('nexus_shortcuts')
+    if (savedShortcuts) {
+      setShortcuts(JSON.parse(savedShortcuts))
     }
-    return 'light';
-  });
 
-  const [contextMenu, setContextMenu] = useState<ContextMenuState>({
-    visible: false,
-    x: 0,
-    y: 0,
-    shortcutId: null,
-  });
-
-  const [modal, setModal] = useState<ModalState>({
-    isOpen: false,
-    type: null,
-  });
+    // Load theme from localStorage or system preference
+    const savedTheme = localStorage.getItem('nexus_theme')
+    if (savedTheme) {
+      setTheme(savedTheme as 'light' | 'dark')
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      setTheme('dark')
+    }
+  }, [])
 
   // --- Persistence & Theme Effect ---
   useEffect(() => {
+    if (!isClient) return
+
     // Use safe save function with automatic quota handling
-    const success = saveToLocalStorage('nexus_shortcuts', shortcuts);
+    const success = saveToLocalStorage('nexus_shortcuts', shortcuts)
 
     // If save fails after auto-cleanup, update state with cleaned data
     if (!success) {
       // Re-read localStorage to get cleaned data
-      const saved = localStorage.getItem('nexus_shortcuts');
+      const saved = localStorage.getItem('nexus_shortcuts')
       if (saved) {
-        const cleanedShortcuts = JSON.parse(saved);
+        const cleanedShortcuts = JSON.parse(saved)
         // Only update state if data actually changed to avoid infinite loop
         if (JSON.stringify(cleanedShortcuts) !== JSON.stringify(shortcuts)) {
-          setShortcuts(cleanedShortcuts);
+          setShortcuts(cleanedShortcuts)
         }
       }
     }
-  }, [shortcuts]);
+  }, [shortcuts, isClient])
 
   useEffect(() => {
-    const root = window.document.documentElement;
+    if (!isClient) return
+
+    const root = window.document.documentElement
     if (theme === 'dark') {
-      root.classList.add('dark');
+      root.classList.add('dark')
     } else {
-      root.classList.remove('dark');
+      root.classList.remove('dark')
     }
-    localStorage.setItem('nexus_theme', theme);
-  }, [theme]);
+    localStorage.setItem('nexus_theme', theme)
+  }, [theme, isClient])
 
   // --- Handlers ---
   const handleContextMenu = (e: React.MouseEvent, shortcutId: string | null) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.preventDefault()
+    e.stopPropagation()
     setContextMenu({
       visible: true,
       x: e.clientX,
       y: e.clientY,
       shortcutId,
-    });
-  };
+    })
+  }
 
   const closeContextMenu = () => {
-    setContextMenu(prev => ({ ...prev, visible: false }));
-  };
+    setContextMenu(prev => ({ ...prev, visible: false }))
+  }
 
   const openAddModal = () => {
-    closeContextMenu();
-    setModal({ isOpen: true, type: 'add' });
-  };
+    closeContextMenu()
+    setModal({ isOpen: true, type: 'add' })
+  }
 
   const openEditModal = () => {
-    closeContextMenu();
+    closeContextMenu()
     if (contextMenu.shortcutId) {
-      setModal({ isOpen: true, type: 'edit', shortcutId: contextMenu.shortcutId });
+      setModal({ isOpen: true, type: 'edit', shortcutId: contextMenu.shortcutId })
     }
-  };
+  }
 
   const deleteShortcut = () => {
-    closeContextMenu();
+    closeContextMenu()
     if (contextMenu.shortcutId) {
-      setShortcuts(prev => prev.filter(s => s.id !== contextMenu.shortcutId));
+      setShortcuts(prev => prev.filter(s => s.id !== contextMenu.shortcutId))
     }
-  };
+  }
 
   const handleSaveShortcut = (title: string, url: string, customIcon?: string) => {
     if (modal.type === 'add') {
@@ -231,40 +258,40 @@ const App: React.FC = () => {
         title,
         url,
         ...(customIcon && { customIcon }), // 只在有 customIcon 时添加
-      };
-      setShortcuts(prev => [...prev, newShortcut]);
+      }
+      setShortcuts(prev => [...prev, newShortcut])
     } else if (modal.type === 'edit' && modal.shortcutId) {
       setShortcuts(prev => prev.map(s =>
         s.id === modal.shortcutId ? { ...s, title, url, customIcon } : s
-      ));
+      ))
     }
-    setModal({ isOpen: false, type: null });
-  };
+    setModal({ isOpen: false, type: null })
+  }
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  };
+    setTheme(prev => prev === 'light' ? 'dark' : 'light')
+  }
 
   // Close context menu on window resize
   useEffect(() => {
-    const handleResize = () => closeContextMenu();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    const handleResize = () => closeContextMenu()
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   return (
     // Background Wrapper
-    <div 
+    <div
       className="min-h-screen w-full bg-slate-50 dark:bg-slate-950 relative overflow-hidden font-sans select-none transition-colors duration-500"
       onContextMenu={(e) => {
-          // Allow native context menu on inputs and text areas
-          const target = e.target as HTMLElement;
-          if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
-            return;
-          }
-          
-          // Trigger custom menu for background
-          handleContextMenu(e, null);
+        // Allow native context menu on inputs and text areas
+        const target = e.target as HTMLElement
+        if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) {
+          return
+        }
+
+        // Trigger custom menu for background
+        handleContextMenu(e, null)
       }}
       onClick={closeContextMenu}
     >
@@ -288,14 +315,13 @@ const App: React.FC = () => {
 
       {/* Main Content */}
       <div className="relative z-10 flex flex-col items-center pt-24 px-4 sm:px-8">
-        
         {/* Logo Area */}
         <div className="text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
-            <AnimatedLogo />
-            <p className="text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-xs font-bold transition-colors duration-500">
-              Personal Dashboard
-            </p>
-            <Clock />
+          <AnimatedLogo />
+          <p className="text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-xs font-bold transition-colors duration-500">
+            Personal Dashboard
+          </p>
+          <Clock />
         </div>
 
         {/* Search */}
@@ -305,8 +331,8 @@ const App: React.FC = () => {
 
         {/* Grid */}
         <div className="w-full animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
-          <ShortcutGrid 
-            shortcuts={shortcuts} 
+          <ShortcutGrid
+            shortcuts={shortcuts}
             onContextMenu={handleContextMenu}
           />
         </div>
@@ -325,7 +351,7 @@ const App: React.FC = () => {
       <Dock />
 
       {/* Overlays */}
-      <ContextMenu 
+      <ContextMenu
         x={contextMenu.x}
         y={contextMenu.y}
         visible={contextMenu.visible}
@@ -336,7 +362,7 @@ const App: React.FC = () => {
         onClose={closeContextMenu}
       />
 
-      <ShortcutModal 
+      <ShortcutModal
         isOpen={modal.isOpen}
         type={modal.type}
         initialData={shortcuts.find(s => s.id === modal.shortcutId)}
@@ -344,7 +370,5 @@ const App: React.FC = () => {
         onSave={handleSaveShortcut}
       />
     </div>
-  );
-};
-
-export default App;
+  )
+}

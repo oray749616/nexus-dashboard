@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Plus, X, StickyNote } from 'lucide-react';
@@ -18,16 +20,26 @@ const COLORS = [
 ];
 
 export const QuickNotesWidget: React.FC = () => {
-  const [notes, setNotes] = useState<Note[]>(() => {
-    const saved = localStorage.getItem('nexus_notes');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [notes, setNotes] = useState<Note[]>([]);
   const [isAdding, setIsAdding] = useState(false);
   const [newNoteText, setNewNoteText] = useState('');
+  const [isClient, setIsClient] = useState(false);
 
+  // Initialize from localStorage on client-side only
   useEffect(() => {
-    localStorage.setItem('nexus_notes', JSON.stringify(notes));
-  }, [notes]);
+    setIsClient(true);
+    const saved = localStorage.getItem('nexus_notes');
+    if (saved) {
+      setNotes(JSON.parse(saved));
+    }
+  }, []);
+
+  // Persist to localStorage
+  useEffect(() => {
+    if (isClient) {
+      localStorage.setItem('nexus_notes', JSON.stringify(notes));
+    }
+  }, [notes, isClient]);
 
   const handleAdd = (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,7 +132,7 @@ export const QuickNotesWidget: React.FC = () => {
               <p className="text-sm font-medium leading-relaxed whitespace-pre-wrap break-words pr-5">
                 {note.text}
               </p>
-              
+
               <button
                 onClick={(e) => {
                    e.stopPropagation();
@@ -131,7 +143,7 @@ export const QuickNotesWidget: React.FC = () => {
               >
                 <X size={14} />
               </button>
-              
+
               <div className="absolute bottom-2 right-3 text-[10px] opacity-50 font-medium">
                 {new Date(note.createdAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}
               </div>

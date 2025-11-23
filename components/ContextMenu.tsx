@@ -1,5 +1,7 @@
+'use client'
+
 import React, { useEffect, useRef } from 'react';
-import { Edit2, Trash2, PlusCircle } from 'lucide-react';
+import { Edit2, Trash2, PlusCircle, RefreshCw } from 'lucide-react';
 
 interface ContextMenuProps {
   x: number;
@@ -86,6 +88,22 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
             </li>
           </>
         )}
+
+        {/* Separator */}
+        <li className="my-1">
+          <div className="h-px bg-slate-200 dark:bg-slate-700" />
+        </li>
+
+        {/* Refresh Button */}
+        <li>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full flex items-center gap-2 px-3 py-2 rounded-md hover:bg-blue-50 dark:hover:bg-blue-500/20 hover:text-blue-600 dark:hover:text-blue-300 transition-colors text-left"
+          >
+            <RefreshCw size={16} />
+            <span>Refresh Page</span>
+          </button>
+        </li>
       </ul>
     </div>
   );
