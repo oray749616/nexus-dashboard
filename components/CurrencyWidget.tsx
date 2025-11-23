@@ -97,7 +97,7 @@ export default function CurrencyWidget() {
     const apiKey = process.env.NEXT_PUBLIC_FXRATES_API_KEY
 
     if (!apiKey || apiKey === 'your_api_key_here') {
-      setError('请在 .env.local 文件中配置 NEXT_PUBLIC_FXRATES_API_KEY')
+      setError('Please configure NEXT_PUBLIC_FXRATES_API_KEY in .env.local file')
       return
     }
 
@@ -110,13 +110,13 @@ export default function CurrencyWidget() {
       )
 
       if (!response.ok) {
-        throw new Error(`API 请求失败: ${response.status}`)
+        throw new Error(`API request failed: ${response.status}`)
       }
 
       const data = await response.json()
 
       if (!data.success) {
-        throw new Error(data.message || 'API 返回错误')
+        throw new Error(data.message || 'API returned an error')
       }
 
       const cachedRates: CachedRates = {
@@ -130,13 +130,13 @@ export default function CurrencyWidget() {
       setLastUpdated(new Date())
       localStorage.setItem('nexus_currency_rates', JSON.stringify(cachedRates))
     } catch (e) {
-      const errorMessage = e instanceof Error ? e.message : '获取汇率失败'
+      const errorMessage = e instanceof Error ? e.message : 'Failed to fetch rates'
       setError(errorMessage)
       console.error('Failed to fetch rates:', e)
 
       // 如果有缓存数据，继续使用
       if (rates) {
-        setError(`${errorMessage}（使用缓存数据）`)
+        setError(`${errorMessage} (using cached data)`)
       }
     } finally {
       setLoading(false)
@@ -163,7 +163,7 @@ export default function CurrencyWidget() {
 
   // 格式化更新时间
   const formatLastUpdated = (): string => {
-    if (!lastUpdated) return '未更新'
+    if (!lastUpdated) return 'Not updated'
 
     const now = Date.now()
     const diff = now - lastUpdated.getTime()
@@ -172,10 +172,10 @@ export default function CurrencyWidget() {
     const hours = Math.floor(diff / 3600000)
     const days = Math.floor(diff / 86400000)
 
-    if (minutes < 1) return '刚刚更新'
-    if (minutes < 60) return `${minutes} 分钟前更新`
-    if (hours < 24) return `${hours} 小时前更新`
-    return `${days} 天前更新`
+    if (minutes < 1) return 'Just updated'
+    if (minutes < 60) return `Updated ${minutes} min ago`
+    if (hours < 24) return `Updated ${hours} hr ago`
+    return `Updated ${days} days ago`
   }
 
   // 获取当前汇率
@@ -200,7 +200,7 @@ export default function CurrencyWidget() {
     >
       {/* 标题 */}
       <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-4">
-        汇率转换
+        Currency Converter
       </h3>
 
       {/* 输入区域 */}
@@ -212,7 +212,7 @@ export default function CurrencyWidget() {
             value={amount}
             onChange={(e) => setAmount(parseFloat(e.target.value) || 0)}
             className="w-0 flex-1 px-3 py-2 bg-slate-50/80 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500/30 text-slate-700 dark:text-slate-200 placeholder-slate-400"
-            placeholder="金额"
+            placeholder="Amount"
             min="0"
             step="0.01"
           />
@@ -230,11 +230,11 @@ export default function CurrencyWidget() {
         </div>
 
         {/* 互换按钮 */}
-        <div className="flex justify-center">
+        <div className="flex justify-end pr-[3.2rem]">
           <button
             onClick={swapCurrencies}
             className="p-2 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/20 rounded-lg transition-all duration-200 active:scale-95"
-            title="互换货币"
+            title="Swap Currencies"
           >
             <ArrowLeftRight size={20} />
           </button>
@@ -244,7 +244,7 @@ export default function CurrencyWidget() {
         <div className="flex gap-2">
           <div className="flex-1 px-3 py-2 bg-indigo-50/50 dark:bg-indigo-500/5 border border-indigo-200/50 dark:border-indigo-500/20 rounded-lg text-slate-700 dark:text-slate-200 font-semibold flex items-center">
             {loading ? (
-              <span className="text-slate-400">计算中...</span>
+              <span className="text-slate-400">Calculating...</span>
             ) : (
               <span>{calculateConversion().toLocaleString()}</span>
             )}
@@ -276,7 +276,7 @@ export default function CurrencyWidget() {
             onClick={fetchRates}
             disabled={loading}
             className="p-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:text-indigo-400 dark:hover:bg-indigo-500/20 rounded-md transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-            title="刷新汇率"
+            title="Refresh Rates"
           >
             <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
           </button>

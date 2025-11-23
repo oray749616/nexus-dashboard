@@ -27,7 +27,7 @@ export const CalendarWidget: React.FC = () => {
     "July", "August", "September", "October", "November", "December"
   ];
 
-  const days = ["S", "M", "T", "W", "T", "F", "S"];
+  const days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   const renderCalendarDays = () => {
     const totalDays = daysInMonth(currentDate);
@@ -77,8 +77,8 @@ export const CalendarWidget: React.FC = () => {
       </div>
       
       <div className="grid grid-cols-7 gap-1 text-center mb-2">
-        {days.map(d => (
-          <div key={d} className="text-xs font-bold text-slate-400 dark:text-slate-500 h-8 flex items-center justify-center">
+        {days.map((d, index) => (
+          <div key={index} className="text-xs font-bold text-slate-400 dark:text-slate-500 h-8 flex items-center justify-center">
             {d}
           </div>
         ))}
