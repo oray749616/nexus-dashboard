@@ -1,7 +1,7 @@
 'use client'
 
 import React, { useRef, useMemo, useReducer, useState } from 'react';
-import { Shortcut } from '../types';
+import { Shortcut } from '@/lib/types';
 
 interface ShortcutGridProps {
   shortcuts: Shortcut[];

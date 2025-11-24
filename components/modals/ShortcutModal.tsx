@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import { X, Upload } from 'lucide-react';
-import { Shortcut } from '../types';
-import { useIconUpload } from '../hooks/useIconUpload';
+import { Shortcut } from '@/lib/types';
+import { useIconUpload } from '@/hooks/useIconUpload';
 
 interface ShortcutModalProps {
   isOpen: boolean;

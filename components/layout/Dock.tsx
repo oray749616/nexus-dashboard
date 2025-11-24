@@ -2,14 +2,13 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Cloud, Calendar, ListTodo, StickyNote, Coins, Key } from 'lucide-react';
-import { WeatherWidget, WeatherData } from './WeatherWidget';
-import { CalendarWidget } from './CalendarWidget';
-import { TodoWidget } from './TodoWidget';
-import { QuickNotesWidget } from './QuickNotesWidget';
-import CurrencyWidget from './CurrencyWidget';
-import { PasswordGeneratorWidget } from './PasswordGeneratorWidget';
-
-type ActiveWidget = 'weather' | 'calendar' | 'todo' | 'notes' | 'currency' | 'password' | null;
+import { WeatherWidget, WeatherData } from '@/components/widgets/WeatherWidget';
+import { CalendarWidget } from '@/components/widgets/CalendarWidget';
+import { TodoWidget } from '@/components/widgets/TodoWidget';
+import { QuickNotesWidget } from '@/components/widgets/QuickNotesWidget';
+import CurrencyWidget from '@/components/widgets/CurrencyWidget';
+import { PasswordGeneratorWidget } from '@/components/widgets/PasswordGeneratorWidget';
+import { ActiveWidget } from '@/lib/types';
 
 export const Dock: React.FC = () => {
   const [activeWidget, setActiveWidget] = useState<ActiveWidget>(null);

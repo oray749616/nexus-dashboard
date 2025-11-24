@@ -3,68 +3,16 @@
 import React, { useState, useEffect } from 'react'
 import { v4 as uuidv4 } from 'uuid'
 import { Sun, Moon } from 'lucide-react'
-import { SearchBar } from '@/components/SearchBar'
-import { ShortcutGrid } from '@/components/ShortcutGrid'
-import { ContextMenu } from '@/components/ContextMenu'
-import { ShortcutModal } from '@/components/ShortcutModal'
-import { Clock } from '@/components/Clock'
-import { AnimatedLogo } from '@/components/AnimatedLogo'
-import { Dock } from '@/components/Dock'
-import { Shortcut, ContextMenuState, ModalState } from '@/types'
-
-/**
- * Safely save to localStorage with quota management
- * Automatically removes oldest custom icons when storage is full
- */
-const saveToLocalStorage = (key: string, data: Shortcut[]): boolean => {
-  try {
-    localStorage.setItem(key, JSON.stringify(data))
-    return true
-  } catch (error) {
-    // Detect quota exceeded error
-    if (error instanceof DOMException && error.name === 'QuotaExceededError') {
-      console.warn('localStorage quota insufficient, attempting to auto-clean custom icons...')
-
-      // Find all shortcuts with custom icons, sorted by time (assuming smaller ID = older)
-      const customIconShortcuts = data.filter(s => s.customIcon)
-
-      if (customIconShortcuts.length === 0) {
-        // No custom icons to clean, cannot resolve quota issue
-        alert('Storage quota exceeded! Please delete some shortcuts or clear browser cache.')
-        return false
-      }
-
-      // Remove the oldest custom icon (keep the shortcut itself)
-      const oldestCustomIcon = customIconShortcuts[0]
-      const cleanedData = data.map(s =>
-        s.id === oldestCustomIcon.id ? { ...s, customIcon: undefined } : s
-      )
-
-      // Display friendly notification
-      const message = `Storage quota exceeded. Automatically removed custom icon for "${oldestCustomIcon.title}".\nThe default website icon will be used instead.`
-      console.warn(message)
-
-      // Delay alert to avoid blocking UI
-      setTimeout(() => alert(message), 100)
-
-      // Recursive retry
-      return saveToLocalStorage(key, cleanedData)
-    }
-
-    // Other errors
-    console.error('localStorage save failed:', error)
-    return false
-  }
-}
-
-// Default shortcuts for first-time users
-const DEFAULT_SHORTCUTS: Shortcut[] = [
-  { id: '1', title: 'ChatGPT', url: 'https://chat.openai.com' },
-  { id: '2', title: 'Gemini', url: 'https://gemini.google.com' },
-  { id: '3', title: 'GitHub', url: 'https://github.com' },
-  { id: '4', title: 'X', url: 'https://x.com' },
-  { id: '5', title: 'BiliBili', url: 'https://bilibili.com' },
-]
+import { SearchBar } from '@/components/ui/SearchBar'
+import { Clock } from '@/components/ui/Clock'
+import { AnimatedLogo } from '@/components/ui/AnimatedLogo'
+import { ContextMenu } from '@/components/ui/ContextMenu'
+import { ShortcutGrid } from '@/components/shortcut/ShortcutGrid'
+import { ShortcutModal } from '@/components/modals/ShortcutModal'
+import { Dock } from '@/components/layout/Dock'
+import { Shortcut, ContextMenuState, ModalState, BackgroundOrb } from '@/lib/types'
+import { saveToLocalStorage, generateBackgroundOrbs } from '@/lib/utils'
+import { DEFAULT_SHORTCUTS, ORB_THEMES, BACKGROUND_ANIMATIONS } from '@/lib/constants'
 
 export default function Home() {
   // --- State Management ---
@@ -73,16 +21,7 @@ export default function Home() {
   const [isClient, setIsClient] = useState(false)
 
   // --- Random Background Orb Themes (Client-side only) ---
-  const [backgroundOrbs, setBackgroundOrbs] = useState<Array<{
-    top: string
-    bottom: string
-    left: string
-    right: string
-    size: string
-    color: string
-    blur: string
-    animation: string
-  }>>([]) // Initialize as empty array for SSR
+  const [backgroundOrbs, setBackgroundOrbs] = useState<BackgroundOrb[]>([])
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
@@ -100,72 +39,8 @@ export default function Home() {
   useEffect(() => {
     setIsClient(true)
 
-    // Generate random background orbs (client-side only to avoid hydration mismatch)
-    const randomPosition = () => ({
-      top: Math.random() > 0.5 ? `${Math.random() * 30 - 10}%` : 'auto',
-      bottom: Math.random() > 0.5 ? `${Math.random() * 30 - 10}%` : 'auto',
-      left: Math.random() > 0.5 ? `${Math.random() * 40 - 10}%` : 'auto',
-      right: Math.random() > 0.5 ? `${Math.random() * 40 - 10}%` : 'auto',
-    })
-
-    // Define multiple color theme groups
-    const orbThemes = [
-      // Theme 1: Purple Dream (原版靛蓝紫色系)
-      [
-        { color: 'bg-indigo-200/40 dark:bg-indigo-900/20', blur: 'blur-[120px]' },
-        { color: 'bg-pink-200/40 dark:bg-purple-900/20', blur: 'blur-[100px]' },
-        { color: 'bg-blue-100/50 dark:bg-slate-900/40', blur: 'blur-[130px]' },
-      ],
-      // Theme 2: Ocean Breeze (海洋蓝绿色系)
-      [
-        { color: 'bg-cyan-200/40 dark:bg-cyan-900/20', blur: 'blur-[110px]' },
-        { color: 'bg-teal-200/40 dark:bg-teal-900/20', blur: 'blur-[120px]' },
-        { color: 'bg-blue-200/50 dark:bg-blue-900/30', blur: 'blur-[130px]' },
-        { color: 'bg-sky-100/40 dark:bg-sky-950/20', blur: 'blur-[100px]' },
-      ],
-      // Theme 3: Sunset Glow (日落橙红色系)
-      [
-        { color: 'bg-orange-200/40 dark:bg-orange-900/20', blur: 'blur-[115px]' },
-        { color: 'bg-rose-200/40 dark:bg-rose-900/20', blur: 'blur-[125px]' },
-        { color: 'bg-amber-100/50 dark:bg-amber-950/25', blur: 'blur-[120px]' },
-      ],
-      // Theme 4: Forest Whisper (森林绿色系)
-      [
-        { color: 'bg-emerald-200/40 dark:bg-emerald-900/20', blur: 'blur-[120px]' },
-        { color: 'bg-lime-200/40 dark:bg-lime-950/20', blur: 'blur-[110px]' },
-        { color: 'bg-green-100/50 dark:bg-green-950/30', blur: 'blur-[130px]' },
-        { color: 'bg-teal-100/40 dark:bg-teal-950/20', blur: 'blur-[100px]' },
-      ],
-      // Theme 5: Candy Pop (糖果粉色系)
-      [
-        { color: 'bg-pink-300/40 dark:bg-pink-900/20', blur: 'blur-[125px]' },
-        { color: 'bg-fuchsia-200/40 dark:bg-fuchsia-900/20', blur: 'blur-[115px]' },
-        { color: 'bg-purple-200/50 dark:bg-purple-950/25', blur: 'blur-[120px]' },
-      ],
-      // Theme 6: Midnight Aurora (极光紫蓝色系)
-      [
-        { color: 'bg-violet-200/40 dark:bg-violet-900/20', blur: 'blur-[120px]' },
-        { color: 'bg-indigo-300/40 dark:bg-indigo-950/25', blur: 'blur-[130px]' },
-        { color: 'bg-purple-100/50 dark:bg-purple-950/30', blur: 'blur-[110px]' },
-        { color: 'bg-blue-200/40 dark:bg-blue-950/20', blur: 'blur-[115px]' },
-      ],
-    ]
-
-    // Randomly select a theme
-    const selectedTheme = orbThemes[Math.floor(Math.random() * orbThemes.length)]
-
-    // Animation variants
-    const animations = ['animate-float-1', 'animate-float-2', 'animate-float-3']
-
-    // Generate orbs with random positions and sizes
-    const generatedOrbs = selectedTheme.map((orb, index) => ({
-      ...randomPosition(),
-      size: `${35 + Math.random() * 30}%`, // 35-65%
-      color: orb.color,
-      blur: orb.blur,
-      animation: animations[index % animations.length],
-    }))
-
+    // 生成随机背景光球（仅客户端，避免水合不匹配）
+    const generatedOrbs = generateBackgroundOrbs(ORB_THEMES, BACKGROUND_ANIMATIONS)
     setBackgroundOrbs(generatedOrbs)
 
     // Load shortcuts from localStorage
