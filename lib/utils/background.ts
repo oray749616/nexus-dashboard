@@ -2,13 +2,19 @@ import { BackgroundOrb, OrbTheme } from '@/lib/types'
 
 /**
  * 生成随机位置配置
+ * 确保垂直和水平方向各有一个定位值
  */
-export const randomPosition = () => ({
-  top: Math.random() > 0.5 ? `${Math.random() * 30 - 10}%` : 'auto',
-  bottom: Math.random() > 0.5 ? `${Math.random() * 30 - 10}%` : 'auto',
-  left: Math.random() > 0.5 ? `${Math.random() * 40 - 10}%` : 'auto',
-  right: Math.random() > 0.5 ? `${Math.random() * 40 - 10}%` : 'auto',
-})
+export const randomPosition = () => {
+  const useTop = Math.random() > 0.5
+  const useLeft = Math.random() > 0.5
+
+  return {
+    top: useTop ? `${Math.random() * 30 - 10}%` : 'auto',
+    bottom: !useTop ? `${Math.random() * 30 - 10}%` : 'auto',
+    left: useLeft ? `${Math.random() * 40 - 10}%` : 'auto',
+    right: !useLeft ? `${Math.random() * 40 - 10}%` : 'auto',
+  }
+}
 
 /**
  * 生成背景光球
