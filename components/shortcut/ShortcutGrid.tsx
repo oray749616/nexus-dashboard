@@ -1,7 +1,8 @@
 'use client'
 
-import React, { useRef, useMemo, useReducer, useState } from 'react';
+import React, { useRef, useMemo, useReducer, useState, useEffect } from 'react';
 import { Shortcut } from '@/lib/types';
+import { getIconFromCache, saveIconToCache, cleanExpiredCache } from '@/lib/utils/iconCache';
 
 interface ShortcutGridProps {
   shortcuts: Shortcut[];
@@ -15,6 +16,14 @@ export const ShortcutGrid: React.FC<ShortcutGridProps> = ({ shortcuts, onContext
 
   // Track shortcuts with failed custom icon loads
   const [customIconFailed, setCustomIconFailed] = useState<Set<string>>(new Set());
+
+  // Track domains that have already logged cache usage (avoid duplicate logs)
+  const loggedDomainsRef = useRef<Set<string>>(new Set());
+
+  // Clean expired cache on component mount
+  useEffect(() => {
+    cleanExpiredCache();
+  }, []);
 
   // Multiple favicon service fallback chain
   const getFaviconUrls = (url: string): string[] => {
@@ -38,11 +47,58 @@ export const ShortcutGrid: React.FC<ShortcutGridProps> = ({ shortcuts, onContext
   // Cache favicon URLs mapping to avoid recalculation on every render
   const faviconUrlsMap = useMemo(() => {
     const map: Record<string, string[]> = {};
+
     shortcuts.forEach(shortcut => {
-      map[shortcut.id] = getFaviconUrls(shortcut.url);
+      const urls = getFaviconUrls(shortcut.url);
+      map[shortcut.id] = urls;
+
+      // Try to restore successful service index from cache
+      if (!shortcut.customIcon) {
+        try {
+          const urlObj = new URL(shortcut.url);
+          const domain = urlObj.hostname;
+          const cachedEntry = getIconFromCache(domain);
+
+          if (cachedEntry && cachedEntry.serviceIndex < urls.length) {
+            faviconIndexesRef.current[shortcut.id] = cachedEntry.serviceIndex;
+            // Only log once per domain to avoid spam
+            if (!loggedDomainsRef.current.has(domain)) {
+              console.log(`[IconCache] Using cached index: ${domain} -> ${cachedEntry.serviceIndex}`);
+              loggedDomainsRef.current.add(domain);
+            }
+          }
+        } catch (error) {
+          console.error('[IconCache] Failed to parse URL:', error);
+        }
+      }
     });
+
     return map;
   }, [shortcuts]);
+
+  const handleFaviconLoad = (shortcutId: string) => {
+    const shortcut = shortcuts.find(s => s.id === shortcutId);
+    if (!shortcut) return;
+
+    try {
+      const urlObj = new URL(shortcut.url);
+      const domain = urlObj.hostname;
+      const currentIndex = faviconIndexesRef.current[shortcutId] || 0;
+      const urls = faviconUrlsMap[shortcutId] || [];
+      const successUrl = urls[currentIndex];
+
+      // Only save if URL exists and cache doesn't already have this exact entry
+      if (successUrl) {
+        const cachedEntry = getIconFromCache(domain);
+        // Skip saving if cache already has the same URL and service index
+        if (!cachedEntry || cachedEntry.url !== successUrl || cachedEntry.serviceIndex !== currentIndex) {
+          saveIconToCache(domain, successUrl, currentIndex);
+        }
+      }
+    } catch (error) {
+      console.error('[IconCache] Failed to save cache:', error);
+    }
+  };
 
   const handleFaviconError = (shortcutId: string) => {
     const urls = faviconUrlsMap[shortcutId] || [];
@@ -99,6 +155,7 @@ export const ShortcutGrid: React.FC<ShortcutGridProps> = ({ shortcuts, onContext
                   src={currentFaviconUrl}
                   alt={shortcut.title}
                   className="w-10 h-10 object-contain"
+                  onLoad={() => handleFaviconLoad(shortcut.id)}
                   onError={() => handleFaviconError(shortcut.id)}
                 />
               ) : (
