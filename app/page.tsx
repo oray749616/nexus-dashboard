@@ -35,6 +35,9 @@ export default function Home() {
     type: null,
   })
 
+  // --- Dock Visibility State ---
+  const [dockVisible, setDockVisible] = useState(false)
+
   // --- Initialize from localStorage (client-side only) ---
   useEffect(() => {
     setIsClient(true)
@@ -168,7 +171,10 @@ export default function Home() {
         // Trigger custom menu for background
         handleContextMenu(e, null)
       }}
-      onClick={closeContextMenu}
+      onClick={() => {
+        closeContextMenu()
+        setDockVisible(false)
+      }}
     >
       {/* Ambient Background Mesh Gradient */}
       <div className="fixed inset-0 z-0 pointer-events-none">
@@ -222,8 +228,25 @@ export default function Home() {
         {theme === 'light' ? <Moon size={24} /> : <Sun size={24} />}
       </button>
 
-      {/* Bottom Left Dock */}
-      <Dock />
+      {/* Bottom Center Toolbar Button */}
+      <button
+        onClick={(e) => {
+          e.stopPropagation()
+          setDockVisible(true)
+        }}
+        className={`
+          fixed bottom-6 left-1/2 -translate-x-1/2 z-30
+          text-sm font-medium text-slate-500 dark:text-slate-400
+          hover:text-slate-700 dark:hover:text-slate-200
+          transition-all duration-300 ease-out
+          ${dockVisible ? 'opacity-0 translate-y-4 pointer-events-none' : 'opacity-100 translate-y-0'}
+        `}
+      >
+        Toolbar
+      </button>
+
+      {/* Bottom Center Dock */}
+      <Dock visible={dockVisible} />
 
       {/* Overlays */}
       <ContextMenu

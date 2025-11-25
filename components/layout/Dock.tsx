@@ -10,7 +10,11 @@ import CurrencyWidget from '@/components/widgets/CurrencyWidget';
 import { PasswordGeneratorWidget } from '@/components/widgets/PasswordGeneratorWidget';
 import { ActiveWidget } from '@/lib/types';
 
-export const Dock: React.FC = () => {
+interface DockProps {
+  visible: boolean;
+}
+
+export const Dock: React.FC<DockProps> = ({ visible }) => {
   const [activeWidget, setActiveWidget] = useState<ActiveWidget>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
@@ -57,20 +61,12 @@ export const Dock: React.FC = () => {
     }
   }, []);
 
+  // Reset active widget when Dock closes
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
-        setActiveWidget(null);
-      }
-    };
-    
-    if (activeWidget) {
-      document.addEventListener('click', handleClickOutside);
+    if (!visible) {
+      setActiveWidget(null);
     }
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, [activeWidget]);
+  }, [visible]);
 
   // Update pill position based on active element
   useEffect(() => {
@@ -116,10 +112,18 @@ export const Dock: React.FC = () => {
   ];
 
   return (
-    <div ref={containerRef} className="fixed bottom-6 left-6 z-40 flex flex-col items-start gap-4">
+    <div
+      ref={containerRef}
+      onClick={(e) => e.stopPropagation()}
+      className={`
+        fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-col items-center gap-4
+        transition-all duration-300 ease-out
+        ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-full pointer-events-none'}
+      `}
+    >
         {/* Widget Popup */}
         <div className={`
-            origin-bottom-left transition-all duration-300 ease-out mb-2
+            origin-bottom transition-all duration-300 ease-out mb-2
             ${activeWidget ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-95 translate-y-4 pointer-events-none'}
         `}>
             {activeWidget && (
@@ -131,9 +135,9 @@ export const Dock: React.FC = () => {
 
         {/* Dock Icons */}
         <div className="relative flex items-center gap-1 p-2 bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl rounded-2xl border border-white/30 dark:border-white/5 shadow-glass">
-            
+
             {/* Animated Sliding Background */}
-            <div 
+            <div
                 className="absolute top-2 bottom-2 rounded-xl bg-indigo-500 shadow-lg shadow-indigo-500/30 transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1) z-0"
                 style={{
                     left: `${pillStyle.left}px`,
