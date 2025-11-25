@@ -45,8 +45,3 @@ export const ORB_THEMES: OrbTheme[] = [
     { color: 'bg-blue-200/40 dark:bg-blue-950/20', blur: 'blur-[115px]' },
   ],
 ]
-
-/**
- * 背景动画类名数组
- */
-export const BACKGROUND_ANIMATIONS = ['animate-float-1', 'animate-float-2', 'animate-float-3']

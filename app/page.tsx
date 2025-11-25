@@ -10,18 +10,16 @@ import { ContextMenu } from '@/components/ui/ContextMenu'
 import { ShortcutGrid } from '@/components/shortcut/ShortcutGrid'
 import { ShortcutModal } from '@/components/modals/ShortcutModal'
 import { Dock } from '@/components/layout/Dock'
-import { Shortcut, ContextMenuState, ModalState, BackgroundOrb } from '@/lib/types'
-import { saveToLocalStorage, generateBackgroundOrbs } from '@/lib/utils'
-import { DEFAULT_SHORTCUTS, ORB_THEMES, BACKGROUND_ANIMATIONS } from '@/lib/constants'
+import { BackgroundOrbs } from '@/components/background'
+import { Shortcut, ContextMenuState, ModalState } from '@/lib/types'
+import { saveToLocalStorage } from '@/lib/utils'
+import { DEFAULT_SHORTCUTS } from '@/lib/constants'
 
 export default function Home() {
   // --- State Management ---
   const [shortcuts, setShortcuts] = useState<Shortcut[]>(DEFAULT_SHORTCUTS)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [isClient, setIsClient] = useState(false)
-
-  // --- Random Background Orb Themes (Client-side only) ---
-  const [backgroundOrbs, setBackgroundOrbs] = useState<BackgroundOrb[]>([])
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
@@ -41,10 +39,6 @@ export default function Home() {
   // --- Initialize from localStorage (client-side only) ---
   useEffect(() => {
     setIsClient(true)
-
-    // 生成随机背景光球（仅客户端，避免水合不匹配）
-    const generatedOrbs = generateBackgroundOrbs(ORB_THEMES, BACKGROUND_ANIMATIONS)
-    setBackgroundOrbs(generatedOrbs)
 
     // Load shortcuts from localStorage
     const savedShortcuts = localStorage.getItem('nexus_shortcuts')
@@ -176,23 +170,8 @@ export default function Home() {
         setDockVisible(false)
       }}
     >
-      {/* Ambient Background Mesh Gradient */}
-      <div className="fixed inset-0 z-0 pointer-events-none">
-        {backgroundOrbs.map((orb, index) => (
-          <div
-            key={index}
-            className={`absolute rounded-full ${orb.color} ${orb.blur} ${orb.animation} transition-colors duration-1000`}
-            style={{
-              top: orb.top,
-              bottom: orb.bottom,
-              left: orb.left,
-              right: orb.right,
-              width: orb.size,
-              height: orb.size,
-            }}
-          />
-        ))}
-      </div>
+      {/* Ambient Background - 流体漂移光球 */}
+      <BackgroundOrbs />
 
       {/* Main Content */}
       <div className="relative z-10 flex flex-col items-center pt-24 px-4 sm:px-8">
