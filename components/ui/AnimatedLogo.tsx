@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 
 type AnimationPhase =
   | 'typing'      // Typing current text
@@ -8,29 +8,34 @@ type AnimationPhase =
   | 'deleting'    // Deleting text
   | 'waiting';    // Blinking cursor before next text
 
-export const AnimatedLogo: React.FC = () => {
-  // Define text variables (leave empty to skip)
-  const FIRST_TEXT = 'GUGUGAGA !!!';
-  const SECOND_TEXT = 'MYGO !!!';
-  const THIRD_TEXT = '';
-  const FOURTH_TEXT = '';
-  const FIFTH_TEXT = '';
+interface AnimatedLogoProps {
+  texts?: string[];  // Dynamic text list, passed from settings
+}
 
+export const AnimatedLogo: React.FC<AnimatedLogoProps> = ({ texts = [] }) => {
   // Combine into a sequence for the animation loop
   // Filters out any empty strings so they are skipped in the animation
   const textSequence = useMemo(() => {
-    return [
-      FIRST_TEXT,
-      SECOND_TEXT,
-      THIRD_TEXT,
-      FOURTH_TEXT,
-      FIFTH_TEXT
-    ].filter(text => text.trim().length > 0);
-  }, []);
+    return texts.filter(text => text.trim().length > 0);
+  }, [texts]);
 
   const [displayText, setDisplayText] = useState('');
   const [phase, setPhase] = useState<AnimationPhase>('typing');
   const [textIndex, setTextIndex] = useState(0);
+
+  // Track texts changes to reset animation
+  const prevTextsRef = useRef<string>(JSON.stringify(texts));
+
+  // Reset animation state when texts change
+  useEffect(() => {
+    const currentTexts = JSON.stringify(texts);
+    if (prevTextsRef.current !== currentTexts) {
+      prevTextsRef.current = currentTexts;
+      setDisplayText('');
+      setPhase('typing');
+      setTextIndex(0);
+    }
+  }, [texts]);
 
   const TYPING_SPEED = 150; // Typing speed (ms)
   const DELETE_SPEED = 100; // Delete speed (ms)

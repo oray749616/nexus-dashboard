@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { v4 as uuidv4 } from 'uuid'
-import { Sun, Moon } from 'lucide-react'
+import { Sun, Moon, Settings } from 'lucide-react'
 import { SearchBar } from '@/components/ui/SearchBar'
 import { Clock } from '@/components/ui/Clock'
 import { AnimatedLogo } from '@/components/ui/AnimatedLogo'
@@ -11,7 +11,8 @@ import { ShortcutGrid } from '@/components/shortcut/ShortcutGrid'
 import { ShortcutModal } from '@/components/modals/ShortcutModal'
 import { Dock } from '@/components/layout/Dock'
 import { BackgroundOrbs } from '@/components/background'
-import { Shortcut, ContextMenuState, ModalState } from '@/lib/types'
+import { SettingsDrawer } from '@/components/settings/SettingsDrawer'
+import { Shortcut, ContextMenuState, ModalState, AppSettings, DEFAULT_SETTINGS } from '@/lib/types'
 import { saveToLocalStorage } from '@/lib/utils'
 import { DEFAULT_SHORTCUTS } from '@/lib/constants'
 
@@ -20,6 +21,8 @@ export default function Home() {
   const [shortcuts, setShortcuts] = useState<Shortcut[]>(DEFAULT_SHORTCUTS)
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
   const [isClient, setIsClient] = useState(false)
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const [contextMenu, setContextMenu] = useState<ContextMenuState>({
     visible: false,
@@ -52,6 +55,12 @@ export default function Home() {
       setTheme(savedTheme as 'light' | 'dark')
     } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       setTheme('dark')
+    }
+
+    // Load settings from localStorage
+    const savedSettings = localStorage.getItem('nexus_settings')
+    if (savedSettings) {
+      setSettings(JSON.parse(savedSettings))
     }
   }, [])
 
@@ -87,6 +96,12 @@ export default function Home() {
     }
     localStorage.setItem('nexus_theme', theme)
   }, [theme, isClient])
+
+  // Save settings to localStorage
+  useEffect(() => {
+    if (!isClient) return
+    localStorage.setItem('nexus_settings', JSON.stringify(settings))
+  }, [settings, isClient])
 
   // --- Handlers ---
   const handleContextMenu = (e: React.MouseEvent, shortcutId: string | null) => {
@@ -129,7 +144,7 @@ export default function Home() {
         id: uuidv4(),
         title,
         url,
-        ...(customIcon && { customIcon }), // 只在有 customIcon 时添加
+        ...(customIcon && { customIcon }), // Only add when customIcon exists
       }
       setShortcuts(prev => [...prev, newShortcut])
     } else if (modal.type === 'edit' && modal.shortcutId) {
@@ -177,7 +192,7 @@ export default function Home() {
       <div className="relative z-10 flex flex-col items-center pt-24 px-4 sm:px-8">
         {/* Logo Area */}
         <div className="text-center mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
-          <AnimatedLogo />
+          {settings.logo.visible && <AnimatedLogo texts={settings.logo.texts} />}
           <p className="text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-xs font-bold transition-colors duration-500">
             Personal Dashboard
           </p>
@@ -198,14 +213,28 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Theme Toggle Button */}
-      <button
-        onClick={toggleTheme}
-        className="fixed bottom-6 right-6 z-40 p-3 rounded-full text-slate-500 dark:text-slate-400 transition-all duration-300 outline-none"
-        aria-label="Toggle Theme"
-      >
-        {theme === 'light' ? <Moon size={24} /> : <Sun size={24} />}
-      </button>
+      {/* Bottom Right Control Area: Theme Toggle + Settings */}
+      <div className="fixed bottom-6 right-6 z-40 flex items-center gap-2">
+        {/* Theme Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          className="p-3 rounded-full text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/10 transition-all duration-300 outline-none"
+          aria-label="Toggle Theme"
+        >
+          {theme === 'light' ? <Moon size={24} /> : <Sun size={24} />}
+        </button>
+        {/* Settings Button */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setSettingsOpen(true)
+          }}
+          className="p-3 rounded-full text-slate-500 dark:text-slate-400 hover:bg-white/50 dark:hover:bg-white/10 transition-all duration-300 outline-none"
+          aria-label="Settings"
+        >
+          <Settings size={24} />
+        </button>
+      </div>
 
       {/* Bottom Center Toolbar Button */}
       <button
@@ -245,6 +274,14 @@ export default function Home() {
         initialData={shortcuts.find(s => s.id === modal.shortcutId)}
         onClose={() => setModal({ isOpen: false, type: null })}
         onSave={handleSaveShortcut}
+      />
+
+      {/* Settings Drawer */}
+      <SettingsDrawer
+        isOpen={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        settings={settings}
+        onSettingsChange={setSettings}
       />
     </div>
   )
