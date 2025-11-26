@@ -3,7 +3,11 @@
 import React, { useEffect, useRef, useMemo, useState } from 'react'
 import { createNoise2D, type NoiseFunction2D } from 'simplex-noise'
 import { ORB_THEMES } from '@/lib/constants'
-import type { AnimatedOrbConfig } from '@/lib/types'
+import type { AnimatedOrbConfig, OrbConfig, RGBAColor } from '@/lib/types'
+
+interface ExtendedOrbConfig extends AnimatedOrbConfig {
+  config: OrbConfig;
+}
 
 interface BackgroundOrbsProps {
   className?: string
@@ -24,8 +28,29 @@ export const BackgroundOrbs: React.FC<BackgroundOrbsProps> = ({ className }) => 
   const animationRef = useRef<number | null>(null)
   const noiseRef = useRef<NoiseFunction2D | null>(null)
 
+  // 检测当前主题（深色/浅色）
+  const [isDark, setIsDark] = useState(false)
+
+  useEffect(() => {
+    // 初始化主题检测
+    const checkTheme = () => {
+      setIsDark(document.documentElement.classList.contains('dark'))
+    }
+
+    checkTheme()
+
+    // 监听主题变化
+    const observer = new MutationObserver(checkTheme)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['class'],
+    })
+
+    return () => observer.disconnect()
+  }, [])
+
   // 客户端初始化时生成光球配置
-  const orbs = useMemo<AnimatedOrbConfig[]>(() => {
+  const orbs = useMemo<ExtendedOrbConfig[]>(() => {
     if (!isClient) return []
 
     // 随机选择主题
@@ -33,15 +58,14 @@ export const BackgroundOrbs: React.FC<BackgroundOrbsProps> = ({ className }) => 
 
     return theme.map((config, index) => ({
       id: `orb-${index}`,
-      color: config.color,
-      blur: config.blur,
+      config, // 保存原始配置（包含 lightColor 和 darkColor）
       size: 35 + Math.random() * 30, // 35-65%
       initialX: Math.random() * 100,
       initialY: Math.random() * 100,
       noiseOffsetX: Math.random() * 1000,
       noiseOffsetY: Math.random() * 1000,
       noiseOffsetScale: Math.random() * 1000,
-      speed: 0.0001 + Math.random() * 0.0002, // 0.0003-0.0005 较快流动
+      speed: 0.0001 + Math.random() * 0.0002, // 0.0001-0.0003 较快流动
     }))
   }, [isClient])
 
@@ -112,21 +136,31 @@ export const BackgroundOrbs: React.FC<BackgroundOrbsProps> = ({ className }) => 
     return <div className={`fixed inset-0 z-0 pointer-events-none overflow-hidden ${className || ''}`} />
   }
 
+  // 辅助函数：将 RGBA 对象转换为 CSS rgba() 字符串
+  const rgbaToString = (color: RGBAColor) =>
+    `rgba(${color.r}, ${color.g}, ${color.b}, ${color.opacity})`
+
   return (
     <div className={`fixed inset-0 z-0 pointer-events-none overflow-hidden ${className || ''}`}>
-      {orbs.map((orb, index) => (
-        <div
-          key={orb.id}
-          ref={el => { orbRefs.current[index] = el }}
-          className={`absolute rounded-full ${orb.color} ${orb.blur} transition-colors duration-1000 will-change-transform`}
-          style={{
-            width: `${orb.size}%`,
-            height: `${orb.size}%`,
-            // 初始位置，动画启动后会被 transform 覆盖
-            transform: `translate(${orb.initialX}vw, ${orb.initialY}vh)`,
-          }}
-        />
-      ))}
+      {orbs.map((orb, index) => {
+        const color = isDark ? orb.config.darkColor : orb.config.lightColor
+        return (
+          <div
+            key={orb.id}
+            ref={el => { orbRefs.current[index] = el }}
+            className="absolute rounded-full will-change-transform"
+            style={{
+              width: `${orb.size}%`,
+              height: `${orb.size}%`,
+              backgroundColor: rgbaToString(color),
+              filter: `blur(${orb.config.blur}px)`,
+              transition: 'background-color 1000ms, filter 1000ms',
+              // 初始位置，动画启动后会被 transform 覆盖
+              transform: `translate(${orb.initialX}vw, ${orb.initialY}vh)`,
+            }}
+          />
+        )
+      })}
     </div>
   )
 }

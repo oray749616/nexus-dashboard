@@ -4,11 +4,22 @@
 export type ThemeMode = 'light' | 'dark';
 
 /**
- * 光球配置
+ * RGB 颜色配置
+ */
+export interface RGBAColor {
+  r: number;
+  g: number;
+  b: number;
+  opacity: number;
+}
+
+/**
+ * 光球配置（新版 - 使用 RGB 值）
  */
 export interface OrbConfig {
-  color: string;
-  blur: string;
+  lightColor: RGBAColor;
+  darkColor: RGBAColor;
+  blur: number; // 像素值
 }
 
 /**
@@ -31,12 +42,10 @@ export interface BackgroundOrb {
 }
 
 /**
- * 动画光球配置（JavaScript 动画版本）
+ * 动画光球配置（JavaScript 动画版本 - v4 使用内联样式）
  */
 export interface AnimatedOrbConfig {
   id: string;
-  color: string;
-  blur: string;
   size: number;              // 35-65 (百分比)
   initialX: number;          // 初始 X 坐标 (0-100)
   initialY: number;          // 初始 Y 坐标 (0-100)

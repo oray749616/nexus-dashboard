@@ -1,6 +1,26 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+/* Tailwind v4 Theme Configuration */
+@theme {
+  /* Custom Colors */
+  --color-glass: rgba(255, 255, 255, 0.65);
+  --color-glass-border: rgba(255, 255, 255, 0.4);
+  --color-primary: #6366f1;
+  --color-secondary: #ec4899;
+
+  /* Font Family */
+  --font-family-sans: var(--font-outfit), var(--font-inter), sans-serif;
+  --font-family-display: var(--font-outfit), sans-serif;
+
+  /* Box Shadows */
+  --shadow-glass: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+  --shadow-glass-hover: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+  --shadow-soft: 0 20px 40px -10px rgba(0,0,0,0.05);
+  --shadow-input: 0 0 20px -2px rgba(0,0,0,0.06);
+
+  /* Animation */
+  --animate-cursor-blink: blink 1.1s step-end infinite;
+}
 
 /* Base styles */
 body {
@@ -35,7 +55,16 @@ body {
   background: #64748b;
 }
 
-/* Animate-in utilities (for entry animations) */
+/* Custom keyframes animations */
+@keyframes blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
 @keyframes fade-in {
   from {
     opacity: 0;
@@ -72,6 +101,7 @@ body {
   }
 }
 
+/* Animation utility classes */
 .animate-in {
   animation-duration: 700ms;
   animation-fill-mode: both;
